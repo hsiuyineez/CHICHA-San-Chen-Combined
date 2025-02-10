@@ -1,0 +1,55 @@
+.title {
+            font-weight: 600;
+            font-size: 24px;
+            padding-top: 20px;
+        }
+
+        .box-points {
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #eeeeee;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .box-points p {
+            margin: 10px 0;
+            color: #728530;
+            font-weight: bold;
+        }
+
+        .update-link a {
+            text-decoration: none;
+            color: #728530;
+            font-size: 16px;
+        }
+
+        .update-link a:hover {
+            text-decoration: underline;
+        }
+
+        .vouchers-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .voucher-box {
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 200px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+            background-color: #eeeeee;
+        }
+
+        .custom-size {
+        width:50%;
+        }
+
+        .sip-earn-section {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.3)),url('/static/images/tree.jpg');
+            background-size: cover;
+            background-position: center;
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+        }
