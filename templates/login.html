@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <title>Login page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <style>
+       * {
+          margin:0;
+          padding:0;
+          box-sizing: border-box;
+          font-family: sans-serif;
+       }
+
+body {
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #D9d9d9;
+}
+
+.wrapper {
+    width:420px;
+    background:white;
+    border:2px solid rgba(255,255,255,.2);
+    box-shadow: 0 0 10px rgba(0,0,0,.2);
+    color:black;
+    border-radius: 10px;
+    padding:30px 40px;
+}
+
+.wrapper h1 {
+    font-size: 36px;
+    text-align: center;
+}
+
+.wrapper .input-box {
+    position: relative;
+    width: 100%;
+    height: 50px;
+    margin:30px 0;
+}
+
+.input-box input {
+    width:100%;
+    height: 100%;
+    background: #D9d9d9;
+    border:none;
+    outline:none;
+    border:2px solid rgba(255,255,255,.2);
+    border-radius: 40px;
+    font-size:16px;
+    color:black;
+    padding:20px 45px 20px 20px;
+}
+
+.input-box input::placeholder {
+    color:black;
+}
+
+.input-box i {
+    position:absolute;
+    right:20px;
+    top: 35%;
+    transform: translate(-50%);
+    font-size:20px;
+}
+
+
+.wrapper .btn {
+    width:100%;
+    height: 45px;
+    background:#9dbc1a;
+    border:none;
+    outline:none;
+    border-radius: 40px;
+    box-shadow: 0 0 10px rgba(0,0,0, .1);
+    color:white;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    background-color: #9dbc1a;
+    transition: all 0.2s ease;
+}
+
+.wrapper .btn:hover {
+    font-size: 20px;
+}
+
+.wrapper .register-link {
+    font-size: 14.5px;
+    text-align: center;
+    margin: 20px 0 15px;
+}
+
+.register-link p a {
+    color:black;
+    text-decoration: none;
+    font-weight: 600;
+    font-size:14.5px;
+}
+
+.register-link p a:hover {
+    text-decoration: underline;
+}
+/* Responsive styles */
+        @media (max-width: 768px) {
+            .wrapper {
+                width: 80%;
+                padding: 20px;
+            }
+
+            .wrapper h1 {
+                font-size: 1.5rem;
+            }
+
+            .input-box input {
+                padding: 10px 35px 10px 15px;
+            }
+
+            .wrapper .btn {
+                font-size: 0.9rem;
+            }
+
+            .wrapper .register-link {
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .wrapper {
+                width: 95%;
+                padding: 15px;
+            }
+
+            .wrapper h1 {
+                font-size: 1.2rem;
+            }
+
+            .input-box input {
+                padding: 8px 30px 8px 10px;
+            }
+
+            .wrapper .btn {
+                font-size: 0.8rem;
+            }
+
+            .wrapper .register-link {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+
+        <form method="post" action="/login">
+            <h1>Login</h1>
+            <div class="input-box">
+                <input type="text" name="email" placeholder="Email" required>
+                <i class="fa-solid fa-user"></i>
+            </div>
+            <div class="input-box">
+                <input type="password" name="password" placeholder="Password" required>
+                <i class="fa-solid fa-lock"></i>
+            </div>
+
+
+            <button type="submit" class="btn">Login</button>
+
+            <div class="register-link">
+                <p>Don't have an account?
+                    <a href="{{ url_for('register') }}">REGISTER</a>
+                </p>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

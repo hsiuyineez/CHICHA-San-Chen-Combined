@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            margin: 20px 0 10px;
+            font-size: 2rem;
+            color: #333;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 60px;
+            margin-top: 10px;
+            padding: 10px;
+        }
+
+        button {
+            width: 150px;
+            padding: 10px 0;
+            font-size: 1rem;
+            color: black;
+            background-color: #D9d9d9;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: center;
+        }
+
+        button:hover {
+            background-color: #9dbc1a;
+        }
+
+        button a {
+            color:black;
+            text-decoration: none;
+        }
+        @media (min-width: 768px) {
+            .button-container {
+                flex-direction: row;
+                gap: 60px;
+            }
+    </style>
+</head>
+<body>
+    <img src="https://static.wixstatic.com/media/91d707_e6204292431e43ae85285f5d575e4873~mv2.png/v1/fill/w_470,h_128,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/chicha-san-chen-logo-h.png">
+    <h1>Login</h1>
+    <div class="button-container">
+        <button type="button">
+            <a href="{{ url_for('login') }}">Customer</a>
+        </button>
+        <button type="button">
+            <a href="{{ url_for('staff_login') }}">Staff</a>
+        </button>
+
+    </div>
+</body>
+</html>

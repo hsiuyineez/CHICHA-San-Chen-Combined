@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading Page</title>
+    <style>
+        body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #eeeeee;
+}
+
+.loading-container {
+    text-align: center;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #9dbc1a;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-container p {
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+    color: #333;
+}
+    </style>
+</head>
+<body>
+    <div class="loading-container">
+        <p>Processing, please wait...</p>
+        <div class="spinner"></div>
+    </div>
+    <script>
+        // script.js
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Set a timeout to redirect to the order page after 3 seconds
+    setTimeout(function() {
+        window.location.href = '/order'; // Change this to the actual route of your order page
+    }, 3000); // 3000 milliseconds = 3 seconds
+});
+    </script>
+</body>
+</html>

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="register.css">
+    <title>Register page</title>
+    <style>
+        * {
+            margin:0;
+            padding:0;
+            box-sizing: border-box;
+            font-family: sans-serif;
+        }
+
+        body {
+            background-color: #D9d9d9;
+        }
+        .container {
+            position: relative;
+            max-width: 700px;
+            width: 100%;
+            background-color: #fff;
+            padding:25px;
+            border-radius: 8px;
+            margin: 50px auto;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+
+        .container h1 {
+            font-size: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .container .form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form .input-box {
+            margin-bottom: 15px;
+            width:100%;
+        }
+
+        .input-box label {
+            color:#333;
+        }
+
+        .form .input-box input{
+            position: relative;
+            height: 50px;
+            width:100%;
+            outline: none;
+            font-size: 1rem;
+            color:black;
+            border:1px solid #ddd;
+            border-radius: 6px;
+            padding:0 15px;
+            margin-top: 8px;
+        }
+
+        .input-box input:focus {
+            box-shadow:0 1px 0 rgba(0,0,0,0.1);
+        }
+
+        .form .column {
+            display: flex;
+            column-gap: 15px;
+        }
+
+        #phone-message {
+            font-size: 13px;
+            font-style: italic;
+        }
+
+
+        .form :where(.access-option, .channel){
+            display: flex;
+            align-items: center;
+            column-gap: 50px;
+            margin-top:-5px;
+        }
+
+        .form .channel{
+            column-gap: 5px;
+        }
+
+        .form :where( .channel input, .channel label){
+            cursor: pointer;
+            color:#333;
+            font-size: 1rem;
+        }
+
+        .channel input {
+            accent-color:#9dbc1a ;
+        }
+
+        .form .access-box {
+            margin-top: 20px;
+        }
+
+        #access {
+            color:#333;
+            font-size: 1rem;
+            font-weight: 400;
+            margin-bottom: 1px;
+        }
+
+
+        .btn {
+            height: 55px;
+            width: 100%;
+            margin-top: 20px;
+            border:none;
+            border-radius: 6px;
+            color:white;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            background-color: #9dbc1a;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            font-size: 20px;
+        }
+
+        .rule {
+            color:#333;
+            font-size: 13px;
+            padding-top: 30px;
+            text-align: center;
+        }
+
+        .rule input {
+            accent-color:#9dbc1a;
+        }
+
+        .rule a {
+            text-decoration: none;
+            font-weight: 600;
+            color:#333
+        }
+
+        .rule a:hover {
+            text-decoration: underline;
+        }
+
+        .login-link {
+            font-size: 14.5px;
+            text-align: center;
+            margin: 20px 0 15px;
+        }
+
+
+        .login-link p a {
+            color:black;
+            text-decoration: none;
+            font-weight: 600;
+            font-size:14.5px;
+        }
+
+        .login-link p a:hover {
+            text-decoration: underline;
+        }
+
+        .valid {
+            color:green;
+        }
+
+        .invalid {
+            color:red;
+        }
+
+        .error-message {
+            display: none;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .container h1 {
+                font-size: 24px;
+            }
+
+            .form .column {
+                flex-direction: column;
+            }
+
+            .btn {
+                font-size: 0.9rem;
+            }
+
+            .rule {
+                font-size: 12px;
+            }
+
+            .login-link {
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+
+            .container h1 {
+                font-size: 20px;
+            }
+
+            .btn {
+                font-size: 0.8rem;
+            }
+
+            .rule {
+                font-size: 11px;
+            }
+
+            .login-link {
+                font-size: 11px;
+            }
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const phoneInput = document.getElementById('phone');
+            const phoneMessage = document.getElementById('phone-message');
+            const passwordInput = document.getElementById('password');
+            const pwordMessage = document.getElementById('pword');
+            const birthInput = document.getElementById('birth');
+            const dateMessage = document.getElementById('date-error');
+            const form = document.getElementById('registrationForm');
+
+            // Function to format today's date in YYYY-MM-DD format
+            function getTodayDate() {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                return `${yyyy}-${mm}-${dd}`;
+            }
+
+            // Set the max attribute of the birthdate input to today's date
+            birthInput.setAttribute('max', getTodayDate());
+
+            phoneInput.addEventListener('input', function () {
+                const phone = phoneInput.value;
+                const phonePattern = /^[689][0-9]{7}$/; // Phone number must be 8 digits long and start with 6, 8, or 9
+
+                if (phonePattern.test(phone)) {
+                    phoneMessage.textContent = "Phone number is valid!";
+                    phoneMessage.classList.remove('invalid');
+                    phoneMessage.classList.add('valid');
+                    phoneMessage.style.display = 'block';
+                } else {
+                    phoneMessage.textContent = "Phone number must be 8 digits long and start with 6, 8, or 9.";
+                    phoneMessage.classList.remove('valid');
+                    phoneMessage.classList.add('invalid');
+                    phoneMessage.style.display = 'block';
+                }
+            });
+
+            passwordInput.addEventListener('input', function () {
+                const password = passwordInput.value;
+                const passwordPattern = /^(?=.*\d).{8,16}$/; // Password must be 8-16 characters and include at least 1 number
+
+                if (passwordPattern.test(password)) {
+                    pwordMessage.textContent = "Password is valid!";
+                    pwordMessage.classList.remove('invalid');
+                    pwordMessage.classList.add('valid');
+                } else {
+                    pwordMessage.textContent = "Password must be 8-16 characters and include at least 1 number.";
+                    pwordMessage.classList.remove('valid');
+                    pwordMessage.classList.add('invalid');
+                }
+            });
+
+            birthInput.addEventListener('input', function () {
+                const birthdate = new Date(birthInput.value);
+                const today = new Date(getTodayDate());
+
+                if (birthdate > today) {
+                    dateMessage.style.display = 'block';
+                    birthInput.classList.add('invalid');
+                    birthInput.classList.remove('valid');
+                } else {
+                    dateMessage.style.display = 'none';
+                    birthInput.classList.remove('invalid');
+                    birthInput.classList.add('valid');
+                }
+            });
+
+            form.addEventListener('submit', function (event) {
+                const phone = phoneInput.value;
+                const phonePattern = /^[689][0-9]{7}$/;
+                const password = passwordInput.value;
+                const passwordPattern = /^(?=.*\d).{8,16}$/;
+                const birthdate = new Date(birthInput.value);
+                const today = new Date(getTodayDate());
+
+                let isValid = true;
+
+                if (!phonePattern.test(phone)) {
+                    phoneMessage.textContent = "Phone number must be 8 digits long and start with 6, 8, or 9.";
+                    phoneMessage.classList.remove('valid');
+                    phoneMessage.classList.add('invalid');
+                    phoneMessage.style.display = 'block';
+                    isValid = false;
+                } else {
+                    phoneMessage.textContent = "Phone number is valid!";
+                    phoneMessage.classList.remove('invalid');
+                    phoneMessage.classList.add('valid');
+                    phoneMessage.style.display = 'block';
+                }
+
+                if (!passwordPattern.test(password)) {
+                    pwordMessage.textContent = "Password must be 8-16 characters and include at least 1 number.";
+                    pwordMessage.classList.remove('valid');
+                    pwordMessage.classList.add('invalid');
+                    isValid = false;
+                } else {
+                    pwordMessage.textContent = "Password is valid!";
+                    pwordMessage.classList.remove('invalid');
+                    pwordMessage.classList.add('valid');
+                }
+
+                if (birthdate > today) {
+                    dateMessage.style.display = 'block';
+                    birthInput.classList.add('invalid');
+                    birthInput.classList.remove('valid');
+                    isValid = false;
+                } else {
+                    dateMessage.style.display = 'none';
+                    birthInput.classList.remove('invalid');
+                    birthInput.classList.add('valid');
+                }
+
+
+                if (!isValid) {
+                    event.preventDefault(); // Prevent form submission
+                }
+            });
+        });
+    </script>
+
+</head>
+<body>
+    <section class="container">
+        <h1>Registration Form</h1>
+        <form class="form" id="registrationForm" method="post" action="{{ url_for('register') }}">
+            <div class="input-box">
+                <label>Full Name</label>
+                <input type="text" placeholder="Enter full name" id="name" name="name" required />
+            </div>
+
+            <div class="input-box">
+                <label>Email Address</label>
+                <input type="email" placeholder="Enter email address" name="email" id="email" required/>
+            </div>
+
+            <div class="column">
+                <div class="input-box">
+                    <label>Phone Number</label>
+                    <input type="text" placeholder="Enter phone number" id="phone" name="phone"
+                           pattern="[689][0-9]{7}" inputmode="numeric" maxlength="8" required />
+                    <span id="phone-message" class="error-message"></span>
+                </div>
+
+                <div class="input-box">
+                    <label>Birth date</label>
+                    <input type="date" name="birth" id="birth" required />
+                    <span id="date-error" class="error-message">Birthdate cannot be in the future.</span>
+                </div>
+            </div>
+
+            <div class="input-box">
+                <label>Password</label>
+                <input type="password" name="password" id="password" required/>
+                <p id="pword" style="font-size:13px;font-style:italic;">Password must be 8-16 characters and include at least 1 number</p>
+            </div>
+
+            <div class="access-box">
+                <p id="access">I would like to receive information and promotion via the following channels: </p> <br>
+                <div class="access-option">
+                    <div class="channel">
+                        <input type="checkbox" name="channels" value="email" id="e"/>
+                        <label for="e">Email</label>
+                    </div>
+                    <div class="channel">
+                        <input type="checkbox" name="channels" value="sms" id="s"/>
+                        <label for="s">SMS</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rule">
+                <p>Acceptance of Terms of Service and Privacy Policy, both of which can be found in the links below*</p>
+                <input type="checkbox" name="rule"/>By checking this box, I acknowledge that I have read and accept the <a href="https://chichasanchen.sgmembers.com/register/index?page=tnc">Terms and Conditions</a> and <a href="https://chichasanchen.sgmembers.com/register/index?page=privacy">Privacy Policy</a>
+            </div>
+
+            <button type="submit" class="btn">Submit</button>
+
+        </form>
+        <div class="login-link">
+            <p>Already have an account? Please
+                <a href="{{ url_for('login') }}">SIGN IN</a> here.
+            </p>
+        </div>
+    </section>
+</body>
+</html>

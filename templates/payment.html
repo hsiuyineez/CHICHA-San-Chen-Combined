@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='payment.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='nav.css') }}">
+    <script src="{{ url_for('static', filename='payment.js') }}"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+                <img src="https://static.wixstatic.com/media/91d707_e6204292431e43ae85285f5d575e4873~mv2.png/v1/fill/w_470,h_128,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/chicha-san-chen-logo-h.png" alt="Logo">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('about') }}">About</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('menu') }}">Menu</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('order_summary') }}">Order</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('contact') }}">Contact</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown">
+                            <img src="{{ url_for('static', filename='images/profile.png') }}" class="profile-icon" alt="Profile">
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('account_information') }}">Account Information</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <div class="loading-container">
+        <p>Processing, please wait...</p>
+        <div class="spinner"></div>
+    </div>
+    <div class="container mt-5 card-container">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title">Payment Details</h2>
+                        <form id="payment-form" method="POST">
+                            <div class="form-group">
+                                <label for="first_name">First Name</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="last_name">Last Name</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="card_type">Card Type</label>
+                                <select class="form-control" id="card_type" name="card_type">
+                                    <option>Debit Card</option>
+                                    <option>Credit Card</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="card_number">Card Number</label>
+                                <input type="text" class="form-control" id="card_number" name="card_number" required>
+                                <span id="card_number_validation" class="hidden"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="expiration">Expiration Date</label>
+                                <input type="month" class="form-control" id="expiration" name="expiration" required>
+                                <span id="expiration_validation" class="hidden"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="cvv">CVV</label>
+                                <input type="text" class="form-control" id="cvv" name="cvv" required>
+                                <span id="cvv_validation" class="hidden"></span>
+                            </div>
+                            <br>
+
+                            <button type="submit" class="btn btn-primary">Place Order</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title">Cart Summary</h2>
+                        <ul class="list-group mb-3">
+                            {% for item in cart %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="my-0">{{ item.name }}</h6>
+                                    <small class="text-muted">{{ item.quantity }} x ${{ '%.2f' | format(item.price) }}</small>
+                                </div>
+                                <span class="text-muted">${{ '%.2f' | format(item.price * item.quantity) }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Subtotal</span>
+                                <strong>${{ '%.2f' | format(subtotal) }}</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>GST (9%)</span>
+                                <strong>${{ '%.2f' | format(gst) }}</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Total</span>
+                                <strong>${{ '%.2f' | format(total) }}</strong>
+                            </li>
+                            {% if session.get('discount_amount') %}
+                            <li class="list-group-item d-flex justify-content-between bg-light">
+                                <span>Discount</span>
+                                <strong class="text-success">-${{ '%.2f' | format(session.get('discount_amount')) }}</strong>
+                            </li>
+                            {% endif %}
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Final Amount</span>
+                                <strong class="{% if session.get('discount_amount') %}text-success{% endif %}">
+                                    ${{ '%.2f' | format(session.get('final_amount', total)) }}
+                                </strong>
+                            </li>
+                        </ul>
+                        <form method="POST" action="{{ url_for('redeem_voucher') }}">
+                            <div class="form-group">
+                                <label for="voucher_code">Voucher Code</label>
+                                <input type="text" class="form-control" id="voucher_code" name="voucher_code">
+                            </div>
+                            <input type="hidden" name="purchase_amount" value="{{ total }}">
+                            <br>
+                            <br>
+                            <br>
+                            <button type="submit" class="btn btn-success">Apply Voucher</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="flash-message" class="alert"></div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const paymentForm = document.getElementById('payment-form');
+            const flashMessageElement = document.getElementById('flash-message');
+            const loadingContainer = document.querySelector('.loading-container');
+            const cardContainer = document.querySelector('.card-container');
+
+            // Function to display flash message
+            function displayFlashMessage(message, type) {
+                flashMessageElement.innerHTML = message;
+                flashMessageElement.className = `alert alert-${type}`;
+                flashMessageElement.style.display = 'block';
+
+                // Automatically hide the flash message after 3 seconds
+                setTimeout(() => {
+                    flashMessageElement.style.display = 'none';
+                }, 3000);
+            }
+
+            paymentForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                // Show loading spinner
+                loadingContainer.style.display = 'flex';
+                cardContainer.style.display = 'none';
+
+                // Simulate a delay for payment processing
+                setTimeout(function() {
+                    displayFlashMessage('Payment Successful!', 'success');
+                    setTimeout(function() {
+                        window.location.href = "{{ url_for('order_summary') }}";
+                    }, 3000);
+                }, 2000);
+            });
+
+            // Hide loading spinner after 3 seconds and show the form
+            setTimeout(function() {
+                loadingContainer.style.display = 'none';
+                cardContainer.style.display = 'block';
+            }, 3000);
+        });
+    </script>
+</body>
+</html>
