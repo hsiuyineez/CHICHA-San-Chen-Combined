@@ -1,0 +1,32 @@
+       .valid {
+            color:green;
+        }
+
+        .invalid {
+            color:red;
+        }
+
+        .error-message {
+            display: none;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+
+            .form-label {
+                font-size: 1rem;
+            }
+
+            .btn {
+                font-size: 1rem;
+            }
+        }

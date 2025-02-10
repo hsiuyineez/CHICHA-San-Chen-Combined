@@ -1,0 +1,65 @@
+.large-close-icon {
+    font-size: 5em;
+    color: black;
+}
+.large-close-icon:hover {
+    color: blue;
+}
+/* Custom styles for cart page */
+.cart-container {
+    padding: 20px;
+    min-height: 100vh; /* Ensure it covers the full height of the viewport */
+}
+.large-close-icon {
+    font-size: 2em; /* Make the close icon bigger */
+}
+.cart-header, .cart-summary {
+    margin: 10px;
+}
+.cart-table {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin: 10px;
+}
+.cart-table th, .cart-table td {
+    vertical-align: middle;
+}
+.cart-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin: 10px;
+}
+
+#flash-message {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50%;
+    z-index: 1000;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .cart-summary, .cart-actions {
+        text-align: center;
+    }
+    .buy-now {
+        min-width: 200px;
+        font-size: 1em;
+    }
+}
+@media (max-width: 480px) {
+    th, td {
+        padding: 5px;
+    }
+    .cart-summary h3 {
+        font-size: 1rem;
+    }
+    .buy-now {
+        min-width: 150px;
+        font-size: 0.9em;
+    }
+}

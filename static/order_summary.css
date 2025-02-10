@@ -1,0 +1,25 @@
+@media (max-width: 768px) {
+            .btn-fixed {
+                min-width: 150px;
+                font-size: 14px;
+            }
+
+            .card-title, .card-text {
+                font-size: 14px;
+            }
+
+            .list-group-item ul {
+                padding-left: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .btn-fixed {
+                min-width: 100px;
+                font-size: 12px;
+            }
+
+            .card-title, .card-text {
+                font-size: 12px;
+            }
+        }
