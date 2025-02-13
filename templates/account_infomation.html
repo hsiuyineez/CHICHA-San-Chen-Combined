@@ -44,7 +44,7 @@
 
         <div class="box-points mb-4 custom-size">
             <p style="font-size:20px">CHICHA San Chen Loyalty</p>
-            <p><span style="font-size:30px">{{ user['points'] }}</span> Points</p>
+            <p><span style="font-size:30px">{{ '%.2f' | format(user['points']) }}</span> Points</p>
         </div>
 
         <p class="title">Your Vouchers</p>
