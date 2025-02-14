@@ -475,6 +475,383 @@ def submit_contact():
 @app.route('/success')
 def success():
     return render_template('success.html')
+    
+from flask import Flask, render_template, request, redirect, url_for,flash,session
+from Forms import leaveForm, mcForm
+from leave import leave
+from mc import mc
+from Voucher import Voucher
+from datetime import datetime, timedelta
+from flask import Response
+import shelve
+import os
+
+app = Flask(__name__)
+app.secret_key = 'your_secret_key'  # Required for Flask-WTF forms
+
+@app.route('/', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        staff_id = request.form['staff_id']
+        password = request.form['password']
+
+        # Open the staff database
+        db = shelve.open('staff.db', 'r')  # Open in read mode
+        staff_dict = db.get('staff', {})
+
+        if staff_id in staff_dict and staff_dict[staff_id] == password:
+            session['staff_id'] = staff_id  # Save staff ID in session
+            db.close()
+            return redirect(url_for('home'))  # Redirect to home page
+        else:
+            flash('Invalid staff ID or password. Please try again.', 'danger')
+            db.close()
+
+    return render_template('login.html')  # Serve the login page
+
+@app.route('/homepage', methods=['GET', 'POST'])
+def home():
+    if 'staff_id' in session:  # Check if staff ID is stored in session
+        staff_id = session['staff_id']
+        return render_template('homepage.html', staff_id=staff_id)
+    else:
+        flash('Please log in to access the home page.', 'warning')
+        return redirect(url_for('login'))
+
+@app.route('/logout')
+def logout():
+    session.pop('staff_id', None)  # Remove staff ID from session
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('login'))
+
+
+
+@app.route('/leave', methods=['GET', 'POST'])
+def leave_view():
+    leave_form = leaveForm(request.form)
+    if 'staff_id' in session:
+        leave_form.staff_id.data = session['staff_id']
+
+    if request.method == 'POST' and leave_form.validate():
+        db = shelve.open("leave.db", "c", writeback=True)
+        leave_dict = db.get("leave", {})
+
+        # Use staff_id as the key
+        staff_id = leave_form.staff_id.data
+        leave_dict[staff_id] = leave(
+            staff_id,
+            leave_form.starting_date.data,
+            leave_form.end_date.data,
+            leave_form.reason.data
+        )
+
+        db["leave"] = leave_dict  # Save back
+        db.close()
+
+        flash("Leave submitted successfully!", "success")
+        return redirect(url_for('leave_view'))
+
+    return render_template('leave.html', form=leave_form)
+
+@app.route('/mc', methods=['GET', 'POST'])
+def mc_view():
+    mc_form = mcForm(request.form)
+    if 'staff_id' in session:
+        mc_form.staff_id.data = session['staff_id']
+
+    if request.method == 'POST' and mc_form.validate():
+        db = shelve.open("mc.db", "c", writeback=True)
+        mc_dict = db.get("mc", {})
+
+        # Use staff_id as the key
+        staff_id = mc_form.staff_id.data
+        mc_dict[staff_id] = mc(
+            staff_id,
+            mc_form.starting_date.data,
+            mc_form.end_date.data,
+            mc_form.proof.data
+        )
+
+        db["mc"] = mc_dict  # Save back
+        db.close()
+
+        flash("MC submitted successfully!", "success")
+        return redirect(url_for('mc_view'))
+
+    return render_template('mc.html', form=mc_form)
+@app.route('/retrieveleave', methods=['GET', 'POST'])
+def retrieve_leave():
+    staff_id = session.get('staff_id')  # Get the logged-in staff's ID from the session
+    if not staff_id:
+        flash('Please log in to view your records.', 'danger')
+        return redirect(url_for('login'))  # Redirect if no staff is logged in
+
+    # Open the shelve database in read mode
+    db = shelve.open('leave.db', 'r')
+
+    # Get all leave records
+    leave_dict = db.get('leave', {})
+
+    # Filter leave records for the logged-in staff member
+    staff_leave_records = [record for record in leave_dict.values() if record.get_staff_id() == staff_id]
+
+    # Close the shelve database
+    db.close()
+
+    # Return the filtered leave records to the template for rendering
+    return render_template('retrieveleave.html', leave_list=staff_leave_records)
+
+
+@app.route('/retrievemc')
+def retrieve_mc():
+    staff_id = session.get('staff_id')  # Get the logged-in staff's ID from the session
+    if not staff_id:
+        flash('Please log in to view your records.', 'danger')
+        return redirect(url_for('login'))  # Redirect if no staff is logged in
+
+    # Open the shelve database in read mode
+    db = shelve.open('mc.db', 'r')
+
+    # Get all MC records
+    mc_dict = db.get('mc', {})
+
+    # Filter MC records for the logged-in staff member
+    staff_mc_records = [record for record in mc_dict.values() if record.get_staff_id() == staff_id]
+
+    # Close the shelve database
+    db.close()
+
+    # Return the filtered MC records to the template for rendering
+    return render_template('retrievemc.html', mc_list=staff_mc_records)
+
+
+@app.route('/updateleave/<int:id>/', methods=['GET', 'POST'])
+def update_leave(id):
+    update_leave_form = leaveForm(request.form)
+
+    db = shelve.open('leave.db', 'c')
+    leave_dict = db.get('leave', {})
+    db.close()
+    print(f"Debug: All leave record IDs: {list(leave_dict.keys())}")
+
+    l = leave_dict.get(str(id))  # Normalize the key to string
+
+    if not l:
+        return f"Leave record with ID {id} not found.", 404
+
+    if request.method == 'POST' and update_leave_form.validate():
+        db = shelve.open('leave.db', 'w')
+        leave_dict = db['leave']
+        # Update record
+        l.set_staff_id(update_leave_form.staff_id.data)
+        l.set_starting_date(update_leave_form.starting_date.data)
+        l.set_end_date(update_leave_form.end_date.data)
+        l.set_reason(update_leave_form.reason.data)
+        leave_dict[str(id)] = l  # Ensure key is str
+        db['leave'] = leave_dict
+        db.close()
+        flash("Leave updated successfully!", "success")
+
+        # Redirect after POST
+        return redirect(url_for('leave_view'))
+
+    # Pre-populate form
+    update_leave_form.staff_id.data = l.get_staff_id()
+    update_leave_form.starting_date.data = l.get_starting_date()
+    update_leave_form.end_date.data = l.get_end_date()
+    update_leave_form.reason.data = l.get_reason()
+    return render_template('updateleave.html', form=update_leave_form)
+
+
+@app.route('/deleteleave/<int:id>', methods=['POST'])
+def delete_leave(id):
+    db = shelve.open('leave.db', 'w')
+    leave_dict = db.get('leave', {})
+    leave_dict.pop(str(id), None)  # Avoid KeyError, normalize key to string
+    db['leave'] = leave_dict
+    db.close()
+    return redirect(url_for('retrieve_leave'))
+
+
+@app.route('/updatemc/<int:id>/', methods=['GET', 'POST'])
+def update_mc(id):
+    update_mc_form = mcForm(request.form)
+
+    db = shelve.open('mc.db', 'c')
+    mc_dict = db.get('mc', {})
+    db.close()
+
+    # Debugging output
+    print(f"Debug: All keys in mc_dict = {list(mc_dict.keys())}")
+    print(f"Debug: Attempting to retrieve record with key = '{str(id)}'")
+
+    m = mc_dict.get(str(id))  # Ensure ID is a string
+
+    if not m:
+        return f"MC record with ID {id} not found.", 404
+
+    if request.method == 'POST' and update_mc_form.validate():
+        db = shelve.open('mc.db', 'w')
+        mc_dict = db['mc']
+        # Update record
+        m.set_staff_id(update_mc_form.staff_id.data)
+        m.set_starting_date(update_mc_form.starting_date.data)
+        m.set_end_date(update_mc_form.end_date.data)
+        m.set_proof(update_mc_form.proof.data)
+        mc_dict[str(id)] = m  # Ensure key is str
+        db['mc'] = mc_dict
+        db.close()
+        flash("MC updated successfully!", "success")
+
+        # Redirect after POST
+        return redirect(url_for('mc_view'))
+
+    else:
+        db = shelve.open('mc.db', 'r')
+        mc_dict = db['mc']
+        db.close()
+        m = mc_dict.get(str(id))
+        if m:
+            # Pre-populate form
+            update_mc_form.staff_id.data = m.get_staff_id()
+            update_mc_form.starting_date.data = m.get_starting_date()
+            update_mc_form.end_date.data = m.get_end_date()
+            update_mc_form.proof.data = m.get_proof()
+        return render_template('updatemc.html', form=update_mc_form)
+
+
+@app.route('/deletemc/<int:id>', methods=['POST'])
+def delete_mc(id):
+    key = str(id)  # Ensure ID is a string
+    db = shelve.open('mc.db', 'w')
+    mc_dict = db.get('mc', {})
+    if key in mc_dict:
+        mc_dict.pop(key)
+        db['mc'] = mc_dict
+        db.close()
+        return redirect(url_for('retrieve_mc'))
+    else:
+        db.close()
+        return f"MC record with ID {id} is not able to delete as it is removed in the database", 404
+
+
+@app.route('/normalize_keys')
+def normalize_keys():
+    db = shelve.open('mc.db', 'w')
+    mc_dict = db.get('mc', {})
+    updated_mc_dict = {str(k): v for k, v in mc_dict.items()}  # Normalize keys to strings
+    db['mc'] = updated_mc_dict
+    db.close()
+    return "Keys in mc.db have been normalized to strings."
+
+
+@app.route('/staff_discount')
+def staff_discount():
+    staff_id = session.get('staff_id')
+    if not staff_id:
+        return "Please log in first."
+
+    vouchers = Voucher.load_vouchers()
+    collected_vouchers = Voucher.load_staff_vouchers(staff_id)
+
+    # Ensure the loaded collected_vouchers has the expected structure
+    print("Collected Vouchers Data:", collected_vouchers)  # Debugging: Check the structure of loaded collected_vouchers
+
+    return render_template('staff_discount.html', vouchers=vouchers.values(), collected_vouchers=collected_vouchers)
+@app.route('/collect/<code>', methods=['POST'])
+def collect_voucher(code):
+    staff_id = session.get('staff_id')
+    if not staff_id:
+        flash('Please log in to collect vouchers.', 'danger')
+        return redirect(url_for('staff_discount'))
+
+    vouchers = Voucher.load_vouchers()
+    collected_vouchers = Voucher.load_staff_vouchers(staff_id)  # Load only this staff's vouchers
+
+    if code in vouchers:
+        current_time = datetime.now()
+
+        # Ensure collected_vouchers[code] is a dictionary
+        if code not in collected_vouchers or isinstance(collected_vouchers[code], dict):
+            collected_vouchers[code] = {
+                'collected_at': current_time,  # Save the datetime under 'collected_at'
+                'collected_by': staff_id       # Optionally store the staff_id who collected it
+            }
+            Voucher.save_staff_vouchers(staff_id, collected_vouchers)  # Save for this staff ONLY
+            flash(f'Congratulations! You have collected {vouchers[code].description}.', 'success')
+        else:
+            next_available = collected_vouchers[code]['collected_at'] + timedelta(days=30)
+            flash(f'You have already collected this voucher. Available again on {next_available.strftime("%Y-%m-%d")}.',
+                  'warning')
+    else:
+        flash('Voucher not found!', 'danger')
+
+    return redirect(url_for('staff_discount'))
+
+@app.route('/search', methods=['GET'])
+def search():
+    query = request.args.get('query', '').lower()  # Get the search query and make it case-insensitive
+
+    if 'leave records' in query:
+        return redirect(url_for('retrieve_leave'))  # Redirect to the leave records page
+    elif 'mc records' in query:
+        return redirect(url_for('retrieve_mc'))  # Redirect to the MC records page
+    elif any(keyword in query for keyword in ['staff discount', 'discount', 'vouchers', 'voucher']):
+        return redirect(url_for('staff_discount'))  # Redirect to the staff discount page
+    elif 'submit mc' in query:
+        return redirect(url_for('mc_view'))
+    elif 'submit leave' in query:
+        return redirect(url_for('leave_view'))  # Redirect to the submit MC/Leave page
+    else:
+        return redirect(url_for('home'))
+
+
+
+@app.route('/view_proof/<staff_id>')
+def view_proof(staff_id):
+    mc_record = get_mc_records(staff_id)
+
+    if mc_record:
+        proof_data = mc_record.get_proof()
+
+        if proof_data:
+            file_name = mc_record.get_proof()  # Assuming proof contains the file name or path
+            _, file_extension = os.path.splitext(file_name)
+
+            file_extension = file_extension.lower().strip(".")
+            mimetype_map = {
+                "pdf": "application/pdf",
+                "png": "image/png",
+                "jpg": "image/jpeg",
+                "jpeg": "image/jpeg"
+            }
+
+            mimetype = mimetype_map.get(file_extension, "application/octet-stream")
+
+            return Response(proof_data, mimetype=mimetype)
+
+    return "Proof not found", 404
+
+
+def get_mc_records(staff_id):
+    db = shelve.open('mc.db', 'r')  # Open the MC database in read mode
+    mc_dict = db.get('mc', {})
+    db.close()
+
+    # Filter MC records for the given staff_id
+    staff_mc_records = [record for record in mc_dict.values() if record.get_staff_id() == staff_id]
+
+    # Return the first record or modify this to suit your needs
+    return staff_mc_records[0] if staff_mc_records else None
+
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
+# 1. generate code and description (10%, 20% off), collection (status, collected or not)
+# 2. voucher database
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
