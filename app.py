@@ -476,7 +476,7 @@ def submit_contact():
 def success():
     return render_template('success.html')
     
-from flask import Flask, render_template, request, redirect, url_for,flash,session
+from flask import Flask, render_template, request, redirect, url_for,flash,session,send_from_directory
 from Forms import leaveForm, mcForm
 from leave import leave
 from mc import mc
@@ -485,9 +485,45 @@ from datetime import datetime, timedelta
 from flask import Response
 import shelve
 import os
+from werkzeug.utils import secure_filename
+
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Required for Flask-WTF forms
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'pdf'}
+
+
+def get_mc_records(staff_id):
+    """ Fetch MC records from shelve database """
+    with shelve.open('mc.db', 'r') as db:
+        mc_dict = db.get('mc', {})
+    return mc_dict.get(staff_id)
+
+mc_records = []
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return "No file part"
+
+        file = request.files['file']
+
+        if file.filename == '':
+            return "No selected file"
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            return f"File {filename} uploaded successfully!"
+
+    return render_template('upload.html')
+
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -565,6 +601,7 @@ def mc_view():
 
         # Use staff_id as the key
         staff_id = mc_form.staff_id.data
+
         mc_dict[staff_id] = mc(
             staff_id,
             mc_form.starting_date.data,
@@ -615,15 +652,18 @@ def retrieve_mc():
     # Get all MC records
     mc_dict = db.get('mc', {})
 
-    # Filter MC records for the logged-in staff member
-    staff_mc_records = [record for record in mc_dict.values() if record.get_staff_id() == staff_id]
+    # Retrieve the MC record for the logged-in staff (if exists)
+    staff_mc_record = mc_dict.get(staff_id)  # Returns None if no record exists
 
     # Close the shelve database
     db.close()
 
-    # Return the filtered MC records to the template for rendering
-    return render_template('retrievemc.html', mc_list=staff_mc_records)
-
+    if staff_mc_record:
+        # Return the MC record to the template for rendering
+        return render_template('retrievemc.html', mc_list=[staff_mc_record])
+    else:
+        flash("No MC record found.", "warning")
+        return render_template('retrievemc.html', mc_list=[])
 
 @app.route('/updateleave/<int:id>/', methods=['GET', 'POST'])
 def update_leave(id):
@@ -809,49 +849,23 @@ def search():
 
 @app.route('/view_proof/<staff_id>')
 def view_proof(staff_id):
+    print(f"Viewing proof for staff_id: {staff_id}")  # Debugging
     mc_record = get_mc_records(staff_id)
 
     if mc_record:
+        print(f"Proof data found: {mc_record.get_proof()}")  # Debugging
         proof_data = mc_record.get_proof()
 
         if proof_data:
-            file_name = mc_record.get_proof()  # Assuming proof contains the file name or path
-            _, file_extension = os.path.splitext(file_name)
-
-            file_extension = file_extension.lower().strip(".")
-            mimetype_map = {
-                "pdf": "application/pdf",
-                "png": "image/png",
-                "jpg": "image/jpeg",
-                "jpeg": "image/jpeg"
-            }
-
-            mimetype = mimetype_map.get(file_extension, "application/octet-stream")
-
-            return Response(proof_data, mimetype=mimetype)
+            file_name = os.path.basename(proof_data)
+            return send_from_directory(app.config['UPLOAD_FOLDER'], file_name)
+    else:
+        print(f"MC record not found for staff_id: {staff_id}")  # Debugging
 
     return "Proof not found", 404
-
-
-def get_mc_records(staff_id):
-    db = shelve.open('mc.db', 'r')  # Open the MC database in read mode
-    mc_dict = db.get('mc', {})
-    db.close()
-
-    # Filter MC records for the given staff_id
-    staff_mc_records = [record for record in mc_dict.values() if record.get_staff_id() == staff_id]
-
-    # Return the first record or modify this to suit your needs
-    return staff_mc_records[0] if staff_mc_records else None
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)
 # 1. generate code and description (10%, 20% off), collection (status, collected or not)
 # 2. voucher database
 
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
