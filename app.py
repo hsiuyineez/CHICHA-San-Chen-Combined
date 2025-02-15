@@ -13,7 +13,7 @@ from flask import Flask, render_template, request, redirect, url_for,flash,sessi
 from Forms import leaveForm, mcForm
 from leave import leave
 from mc import mc
-from Voucher import Voucher
+from Vouchers import Vouchers
 from datetime import datetime, timedelta
 from flask import Response
 import shelve
@@ -789,8 +789,8 @@ def staff_discount():
     if not staff_id:
         return "Please log in first."
 
-    vouchers = Voucher.load_vouchers()
-    collected_vouchers = Voucher.load_staff_vouchers(staff_id)
+    vouchers = Vouchers.load_vouchers()
+    collected_vouchers = Vouchers.load_staff_vouchers(staff_id)
 
     # Ensure the loaded collected_vouchers has the expected structure
     print("Collected Vouchers Data:", collected_vouchers)  # Debugging: Check the structure of loaded collected_vouchers
@@ -803,8 +803,8 @@ def collect_voucher(code):
         flash('Please log in to collect vouchers.', 'danger')
         return redirect(url_for('staff_discount'))
 
-    vouchers = Voucher.load_vouchers()
-    collected_vouchers = Voucher.load_staff_vouchers(staff_id)  # Load only this staff's vouchers
+    vouchers = Vouchers.load_vouchers()
+    collected_vouchers = Vouchers.load_staff_vouchers(staff_id)  # Load only this staff's vouchers
 
     if code in vouchers:
         current_time = datetime.now()
@@ -815,7 +815,7 @@ def collect_voucher(code):
                 'collected_at': current_time,  # Save the datetime under 'collected_at'
                 'collected_by': staff_id       # Optionally store the staff_id who collected it
             }
-            Voucher.save_staff_vouchers(staff_id, collected_vouchers)  # Save for this staff ONLY
+            Vouchers.save_staff_vouchers(staff_id, collected_vouchers)  # Save for this staff ONLY
             flash(f'Congratulations! You have collected {vouchers[code].description}.', 'success')
         else:
             next_available = collected_vouchers[code]['collected_at'] + timedelta(days=30)
