@@ -1,0 +1,55 @@
+<nav class="navbar navbar-expand-sm  bg-success navbar-dark ">
+<a class="navbar-brand" href="{{ url_for('home') }}">
+    <img src="{{ url_for('static', filename='img.png') }}" alt="Logo" style="width:200px;height:80px">
+</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="collapsibleNavbar">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" href="#">Break</a>
+        </li>
+       <li class="nav-item">
+  <a class="nav-link" href="{{ url_for('staff_discount') }}">Staff Discount</a>
+</li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">Progress and Report</a>
+
+        </li>
+<li class="nav-item dropdown">
+  <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Submit MC/Leave</a>
+  <ul class="dropdown-menu">
+    <li><a class="dropdown-item" href="{{ url_for('mc_view') }}">Submit MC</a></li>
+    <li><a class="dropdown-item" href="{{ url_for('leave_view') }}">Submit Leave</a></li>
+    <li><a class="dropdown-item" href="{{ url_for('retrieve_mc') }}">Retrieve MC</a></li>
+    <li><a class="dropdown-item" href="{{ url_for('retrieve_leave') }}">Retrieve Leave</a></li>
+  </ul>
+</li>
+
+
+        <li class="nav-item">
+          <a class="nav-link" href="#">Log Work Hours</a>
+        </li>
+
+      </ul>
+      <br>
+      <br>
+      <form class="d-flex ms-auto" action="{{ url_for('search') }}" method="GET">
+          <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" name="query">
+
+        </form>
+        {% if 'staff_id' in session %}
+            <a class="btn btn-danger text-white" href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+            <a class="btn btn-primary text-white" href="{{ url_for('login') }}">Login</a>
+        {% endif %}
+
+
+    </div>
+
+</nav>
+<style>
+ .navbar .d-flex {margin-left:0;
+ margin-right:auto;}
+</style>
