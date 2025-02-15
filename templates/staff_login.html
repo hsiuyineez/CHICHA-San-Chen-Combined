@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHICHA San Chen-Staff Login</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-container img {
+            width: 400px;
+            height: auto;
+        }
+
+        .login-container {
+            background-color: #ddd;
+            padding: 20px 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+            border: 2px solid #28a745
+        }
+
+        .login-container h1 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+
+        .login-container label {
+            display: block;
+            text-align: left;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .login-container input[type="text"],
+        .login-container input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .login-container button {
+            width: 48%;
+            padding: 10px;
+            margin: 5px 1%;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .login-container button[type="submit"] {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .login-container button[type="button"] {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .login-container button:hover {
+            opacity: 0.9;
+        }
+
+        .flash-messages .danger {
+            color: red;
+        }
+
+        .flash-messages .warning {
+            color: orange;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <img src="{{ url_for('static', filename='img.png') }}" alt="Company Logo">
+    </div>
+
+    <div class="login-container">
+        <h1>Staff Login</h1>
+        <form method="POST" action="{{ url_for('stafflogin') }}">
+            <label for="staff_id">Staff ID:</label>
+            <input type="text" name="staff_id" id="staff_id" required>
+
+            <label for="password">Password:</label>
+            <input type="password" name="password" id="password" required>
+
+            <button type="submit">Login</button>
+            <button type="button" onclick="window.location.href='/'">Cancel</button>
+        </form>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                <p class="{{ category }}">{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% endwith %}
+    </div>
+</body>
+</html>
+
