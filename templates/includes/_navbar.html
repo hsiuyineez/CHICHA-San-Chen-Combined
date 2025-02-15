@@ -40,9 +40,9 @@
 
         </form>
         {% if 'staff_id' in session %}
-            <a class="btn btn-danger text-white" href="{{ url_for('logout') }}">Logout</a>
+            <a class="btn btn-danger text-white" href="{{ url_for('stafflogout') }}">Logout</a>
         {% else %}
-            <a class="btn btn-primary text-white" href="{{ url_for('login') }}">Login</a>
+            <a class="btn btn-primary text-white" href="{{ url_for('stafflogin') }}">Login</a>
         {% endif %}
 
 
