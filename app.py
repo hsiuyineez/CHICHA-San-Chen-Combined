@@ -9,7 +9,16 @@ from discount import *
 from datetime import datetime, timedelta
 import random
 import string
-
+from flask import Flask, render_template, request, redirect, url_for,flash,session,send_from_directory
+from Forms import leaveForm, mcForm
+from leave import leave
+from mc import mc
+from Voucher import Voucher
+from datetime import datetime, timedelta
+from flask import Response
+import shelve
+import os
+from werkzeug.utils import secure_filename
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -475,21 +484,10 @@ def submit_contact():
 @app.route('/success')
 def success():
     return render_template('success.html')
-    
-from flask import Flask, render_template, request, redirect, url_for,flash,session,send_from_directory
-from Forms import leaveForm, mcForm
-from leave import leave
-from mc import mc
-from Voucher import Voucher
-from datetime import datetime, timedelta
-from flask import Response
-import shelve
-import os
-from werkzeug.utils import secure_filename
 
 
-app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Required for Flask-WTF forms
+
+  # Required for Flask-WTF forms
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'pdf'}
 
@@ -554,7 +552,7 @@ def homepage():
         flash('Please log in to access the home page.', 'warning')
         return redirect(url_for('stafflogin'))
 
-@app.route('/logout')
+@app.route('/stafflogout')
 def stafflogout():
     session.pop('staff_id', None)  # Remove staff ID from session
     flash('You have been logged out.', 'info')
