@@ -1,0 +1,117 @@
+{% extends "bases.html" %}
+{% block title %}Staff Portal - Submit MC/Leave{% endblock %}
+{% block content %}
+{% from "includes/_formHelper.html" import render_field %}
+<br><br>
+<!-- Bootstrap Form Styling -->
+<div class="container my-5">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert alert-success text-center">
+                {% for category, message in messages %}
+                    <p class="mb-0">{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Form Section -->
+    <div class="card shadow-lg border-success">
+        <div class="card-header bg-success text-white text-center">
+            <h2 class="mb-0">Submit Leave</h2>
+        </div>
+        <div class="card-body bg-light">
+            <form method="POST" action="" onsubmit="return validateDates()">
+                {{ form.hidden_tag() }}
+
+                <!-- Bootstrap Grid for Form Fields with reduced size -->
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            {{ render_field(form.staff_id, class="form-control custom-width") }}
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            {{ render_field(form.starting_date, class="form-control custom-width") }}
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            {{ render_field(form.end_date, class="form-control custom-width") }}
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            {{ render_field(form.reason, class="form-control custom-width") }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Buttons with smaller padding -->
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="submit" name="submit_leave" class="btn btn-success px-3 py-1">Submit</button>
+                    <button type="reset" class="btn btn-secondary px-3 py-1">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal (If needed) -->
+{% if success_message %}
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="successModalLabel">Success</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p>{{ success_message }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- JavaScript -->
+<script>
+    function validateDates() {
+        var startDate = document.getElementById('starting_date').value;
+        var endDate = document.getElementById('end_date').value;
+
+        if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+            alert("Start date cannot be later than end date!");
+            return false;
+        }
+        return true;
+    }
+
+    // Show success modal if there's a success message
+    {% if success_message %}
+        var successModal = new bootstrap.Modal(document.getElementById('successModal'));
+        successModal.show();
+    {% endif %}
+</script>
+
+<!-- Custom CSS for reducing form size -->
+<style>
+    .custom-width {
+        max-width: 400px; /* Adjust the max width to make the form smaller */
+        width: 100%;
+        margin: 0 auto; /* Center the field horizontally */
+    }
+
+    .card {
+        max-width: 600px; /* Adjust the card size */
+        margin: 0 auto; /* Center the card in the container */
+    }
+
+    .btn {
+        padding: 0.5rem 1.5rem; /* Reduce button size */
+    }
+</style>
+
+{% endblock %}
