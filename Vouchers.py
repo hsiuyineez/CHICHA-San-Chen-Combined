@@ -1,7 +1,7 @@
 import shelve
 from datetime import datetime, timedelta
 
-class Voucher:
+class Vouchers:
     def __init__(self, code, description, collection):
         self.code = code
         self.description = description
@@ -16,7 +16,7 @@ class Voucher:
             vouchers = {}
             for code, data in raw_vouchers.items():
                 if isinstance(data, dict):  # Convert dictionary to Voucher instance
-                    vouchers[code] = Voucher(
+                    vouchers[code] = Vouchers(
                         data['code'],
                         data['description'],
                         data['collection']
@@ -51,7 +51,7 @@ def initialize_vouchers():
         db['vouchers'] = {}  # Reset the database
 
     print("⚠️ Vouchers database reset! Now initializing new vouchers...")
-    vouchers = Voucher.load_vouchers()
+    vouchers = Vouchers.load_vouchers()
     if any(isinstance(v, dict) for v in vouchers.values()):
         print("⚠️ Resetting vouchers.db due to incorrect format!")
         vouchers = {}  # Reset dictionary
@@ -71,8 +71,8 @@ def initialize_vouchers():
              "collection": "Collection 11"},
             ]
         for data in sample_vouchers:
-            vouchers[data['code']] = Voucher(data['code'], data['description'], data['collection'])
-        Voucher.save_vouchers(vouchers)
+            vouchers[data['code']] = Vouchers(data['code'], data['description'], data['collection'])
+        Vouchers.save_vouchers(vouchers)
 
 
 def reset_staff_vouchers():
