@@ -525,8 +525,8 @@ def upload_file():
     return render_template('upload.html')
 
 
-@app.route('/', methods=['GET', 'POST'])
-def login():
+@app.route('/staff_login', methods=['GET', 'POST'])
+def stafflogin():
     if request.method == 'POST':
         staff_id = request.form['staff_id']
         password = request.form['password']
@@ -538,27 +538,27 @@ def login():
         if staff_id in staff_dict and staff_dict[staff_id] == password:
             session['staff_id'] = staff_id  # Save staff ID in session
             db.close()
-            return redirect(url_for('home'))  # Redirect to home page
+            return redirect(url_for('homepage'))  # Redirect to home page
         else:
             flash('Invalid staff ID or password. Please try again.', 'danger')
             db.close()
 
-    return render_template('login.html')  # Serve the login page
+    return render_template('staff_login.html')  # Serve the login page
 
 @app.route('/homepage', methods=['GET', 'POST'])
-def home():
+def homepage():
     if 'staff_id' in session:  # Check if staff ID is stored in session
         staff_id = session['staff_id']
         return render_template('homepage.html', staff_id=staff_id)
     else:
         flash('Please log in to access the home page.', 'warning')
-        return redirect(url_for('login'))
+        return redirect(url_for('stafflogin'))
 
 @app.route('/logout')
-def logout():
+def stafflogout():
     session.pop('staff_id', None)  # Remove staff ID from session
     flash('You have been logged out.', 'info')
-    return redirect(url_for('login'))
+    return redirect(url_for('stafflogin'))
 
 
 
@@ -621,7 +621,7 @@ def retrieve_leave():
     staff_id = session.get('staff_id')  # Get the logged-in staff's ID from the session
     if not staff_id:
         flash('Please log in to view your records.', 'danger')
-        return redirect(url_for('login'))  # Redirect if no staff is logged in
+        return redirect(url_for('stafflogin'))  # Redirect if no staff is logged in
 
     # Open the shelve database in read mode
     db = shelve.open('leave.db', 'r')
@@ -644,7 +644,7 @@ def retrieve_mc():
     staff_id = session.get('staff_id')  # Get the logged-in staff's ID from the session
     if not staff_id:
         flash('Please log in to view your records.', 'danger')
-        return redirect(url_for('login'))  # Redirect if no staff is logged in
+        return redirect(url_for('stafflogin'))  # Redirect if no staff is logged in
 
     # Open the shelve database in read mode
     db = shelve.open('mc.db', 'r')
@@ -843,7 +843,7 @@ def search():
     elif 'submit leave' in query:
         return redirect(url_for('leave_view'))  # Redirect to the submit MC/Leave page
     else:
-        return redirect(url_for('home'))
+        return redirect(url_for('homepage'))
 
 
 
