@@ -19,10 +19,11 @@ from flask import Response
 import shelve
 import os
 from werkzeug.utils import secure_filename
-import shelve as sh
 from data import monthly_sales, individual_sales
+import os
+import shelve as sh
 import json
-
+from datetime import datetime
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -557,9 +558,7 @@ def homepage():
 
 @app.route('/stafflogout')
 def stafflogout():
-    session.pop('staff_id', None)  
-    session.pop("position", None)
-# Remove staff ID from session
+    session.pop('staff_id', None)  # Remove staff ID from session
     flash('You have been logged out.', 'info')
     return redirect(url_for('stafflogin'))
 
@@ -872,7 +871,7 @@ def view_proof(staff_id):
 def break_page():
     if 'staff_id' not in session:
         flash('Please log in to access the break page.', 'warning')
-        return redirect(url_for('login'))
+        return redirect(url_for('stafflogin'))
 
     staff_id = session['staff_id']
     position = session.get('position')
@@ -954,7 +953,7 @@ def datetime_filter(value, format='%Y-%m-%d %H:%M:%S'):
 def break_log():
     if 'staff_id' not in session:
         flash('Please log in to access the break logs.', 'warning')
-        return redirect(url_for('login'))
+        return redirect(url_for('stafflogin'))
 
     staff_id = session['staff_id']
     position = session.get('position')
@@ -987,6 +986,159 @@ def break_log():
         start_date=request.form.get("start_date", ""),
         end_date=request.form.get("end_date", "")
     )
+
+# Replace JSON with shelve for staff data
+STAFF_FILE = "staff_data.db"
+
+WORK_HOURS_DB = "work_hours.db"  # Database for logging working hours
+STAFF_DB = "staff.db"  # Database for authentication
+
+def get_staff_db():
+    db = sh.open(STAFF_DB, writeback=True)
+    if 'staff' not in db:
+        db['staff'] = {}  # Store staff credentials
+    return db
+
+
+def get_work_hours_db():
+    db = sh.open(WORK_HOURS_DB, writeback=True)
+    if 'work_hours' not in db:
+        db['work_hours'] = {}  # Store work hours
+    return db
+
+def initialize_file():
+    # This function is now just to ensure that the staff file exists
+    if not os.path.exists(STAFF_FILE):
+        with sh.open(STAFF_FILE) as staff_db:
+            staff_db["staff_data"] = {}  # Initialize with an empty dictionary
+
+initialize_file()
+
+@app.template_filter('to_datetime')
+def to_datetime(value, format='%Y-%m-%d'):
+    try:
+        return datetime.strptime(value, format)
+    except ValueError:
+        return value  # If there's an error, return the original value instead of crashing
+
+
+# Create a custom Jinja filter for date formatting
+@app.route('/log_working_hours', methods=['GET', 'POST'])
+def log_working_hours():
+    if 'staff_id' not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for('stafflogin'))
+
+    staff_id = session['staff_id']
+    db = get_work_hours_db()
+
+    if request.method == 'POST':
+        start_date = request.form['start_date']
+        end_date = request.form['end_date']
+
+        # Convert the date strings to datetime objects
+        try:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+            end_date = datetime.strptime(end_date, "%Y-%m-%d")
+        except ValueError:
+            flash("Invalid date format. Please use the correct format.", "danger")
+            return redirect(url_for('log_working_hours'))
+
+        work_hours = {}
+        for day in ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]:
+            check_in = request.form.get(f'check_in_{day}')
+            check_out = request.form.get(f'check_out_{day}')
+            not_working = request.form.get(f'not_working_{day}')
+
+            work_hours[day] = {
+                'check_in': check_in if not not_working else None,
+                'check_out': check_out if not not_working else None,
+                'status': 'Pending' if check_in and check_out else 'Not Working'
+            }
+
+        db['work_hours'][staff_id] = {
+            'start_date': start_date.strftime("%Y-%m-%d"),  # Save as string
+            'end_date': end_date.strftime("%Y-%m-%d"),  # Save as string
+            'weekly_hours': work_hours
+        }
+        db.close()
+        flash("Work hours logged successfully!", "success")
+        return redirect(url_for('dashboard'))
+
+    # If it's a GET request, we render the form with any pre-filled dates
+    start_date = ""
+    end_date = ""
+    return render_template('log_working_hours.html', start_date=start_date, end_date=end_date)
+
+# View working hours (both staff and manager)
+@app.route('/view_working_hours')
+def view_working_hours():
+    if 'staff_id' not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for('stafflogin'))
+
+    db = get_work_hours_db()
+    staff_data = db.get('work_hours', {})
+    db.close()
+
+    return render_template('view_working_hours.html', staff_data=staff_data)
+
+# Delete working hours (manager only)
+@app.route('/delete_working_hours', methods=['POST'])
+def delete_working_hours():
+    if 'staff_id' not in session or session.get('position') != 'manager':
+        return jsonify({'success': False, 'message': 'Unauthorized access'}), 403
+
+    data = json.loads(request.data)
+    staff_id, day = data['staff_id'], data['day']
+
+    db = get_work_hours_db()
+    if staff_id in db['work_hours']:
+        del db['work_hours'][staff_id]['weekly_hours'][day]
+        db.close()
+        return jsonify({'success': True})
+
+    return jsonify({'success': False, 'message': 'Work hours not found'}), 404
+
+# Edit working hours (manager only)
+@app.route('/edit_working_hours', methods=['POST'])
+def edit_working_hours():
+    if 'staff_id' not in session or session.get('position') != 'manager':
+        return jsonify({'success': False, 'message': 'Unauthorized access'}), 403
+
+    data = json.loads(request.data)
+    staff_id, day = data['staff_id'], data['day']
+    check_in, check_out = data['check_in'], data['check_out']
+
+    db = get_work_hours_db()
+    if staff_id in db['work_hours']:
+        db['work_hours'][staff_id]['weekly_hours'][day] = {
+            'check_in': check_in,
+            'check_out': check_out,
+            'status': 'Edited by Manager'
+        }
+        db.close()
+        return jsonify({'success': True})
+
+    return jsonify({'success': False, 'message': 'Work hours not found'}), 404
+
+# Accept working hours (manager only)
+@app.route('/accept_working_hours', methods=['POST'])
+def accept_working_hours():
+    if 'staff_id' not in session or session.get('position') != 'manager':
+        return jsonify({'success': False, 'message': 'Unauthorized access'}), 403
+
+    data = json.loads(request.data)
+    staff_id, day = data['staff_id'], data['day']
+
+    db = get_work_hours_db()
+    if staff_id in db['work_hours']:
+        db['work_hours'][staff_id]['weekly_hours'][day]['status'] = 'Accepted'
+        db.close()
+        return jsonify({'success': True})
+
+    return jsonify({'success': False, 'message': 'Work hours not found'}), 404
+
 @app.route("/progress_report")
 def progress_report():
     # Make sure to pass the data as lists
@@ -1009,7 +1161,7 @@ def export_excel():
                 "Month": month["Month"],
                 "Item Name": item["Item Name"],
                 "Units Sold": item["Units Sold"],
-                "Revenue": item["Revenue"],
+              "Revenue": item["Revenue"],
                 "Total Sales": total_sales,
                 "Monthly Revenue": revenue
             })
@@ -1021,7 +1173,6 @@ def export_excel():
     output.seek(0)
 
     return send_file(output, as_attachment=True, download_name="sales_data.xlsx")
-
 
 
 if __name__ == '__main__':
