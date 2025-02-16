@@ -554,7 +554,9 @@ def homepage():
 
 @app.route('/stafflogout')
 def stafflogout():
-    session.pop('staff_id', None)  # Remove staff ID from session
+    session.pop('staff_id', None)  
+    session.pop("position", None)
+# Remove staff ID from session
     flash('You have been logged out.', 'info')
     return redirect(url_for('stafflogin'))
 
@@ -861,6 +863,163 @@ def view_proof(staff_id):
         print(f"MC record not found for staff_id: {staff_id}")  # Debugging
 
     return "Proof not found", 404
+
+# Break page route
+@app.route("/break", methods=["GET", "POST"])
+def break_page():
+    if 'staff_id' not in session:
+        flash('Please log in to access the break page.', 'warning')
+        return redirect(url_for('login'))
+
+    staff_id = session['staff_id']
+    position = session.get('position')
+    invalid_time = False
+    current_time = datetime.now().strftime("%H:%M:%S")
+    current_hour = datetime.now().hour
+    current_date = datetime.now().strftime("%Y-%m-%d")  # Add the current date for logging
+
+    # Open breaks database
+    with sh.open("breaks.db", "c") as db:
+        if "break_records" not in db:
+            db["break_records"] = {}
+
+        records = db["break_records"]
+
+        if staff_id not in records:
+            records[staff_id] = {"break_in": None, "break_out": None, "date": current_date}
+
+        if request.method == "POST":
+            break_action = request.form.get("break_action")
+
+            if current_hour < 9 or current_hour >= 23:
+                invalid_time = True
+            else:
+                if break_action == "break_in":
+                    records[staff_id]["break_in"] = current_time
+                    records[staff_id]["date"] = current_date  # Ensure the date is saved
+                    flash(f"Break-in recorded at {current_time}!", "success")
+                elif break_action == "break_out":
+                    records[staff_id]["break_out"] = current_time
+                    flash(f"Break-out recorded at {current_time}!", "success")
+
+                db["break_records"] = records  # Save changes
+
+            # Save to break log if both times exist
+            with sh.open("break_log.db", "c") as log_db:
+                if "break_log" not in log_db:
+                    log_db["break_log"] = {}
+
+                break_log = log_db["break_log"]
+
+                if records[staff_id]["break_in"] and records[staff_id]["break_out"]:
+                    break_in_time = datetime.strptime(records[staff_id]["break_in"], "%H:%M:%S")
+                    break_out_time = datetime.strptime(records[staff_id]["break_out"], "%H:%M:%S")
+                    total_break_minutes = round((break_out_time - break_in_time).seconds / 60.0, 2)
+
+                    break_log[staff_id] = {
+                        "break_in": records[staff_id]["break_in"],
+                        "break_out": records[staff_id]["break_out"],
+                        "total_break": total_break_minutes,
+                        "date": current_date  # Include the date in the break log entry
+                    }
+
+                log_db["break_log"] = break_log
+
+            return redirect(url_for("break_page"))
+
+        # Get user-specific break record
+        user_break_record = records.get(staff_id, {"break_in": None, "break_out": None, "date": current_date})
+
+    return render_template("break.html",
+                           position=position,
+                           invalid_time=invalid_time,
+                           user_break_record=user_break_record)
+
+
+# Register the custom datetime filter
+@app.template_filter('datetime')
+def datetime_filter(value, format='%Y-%m-%d %H:%M:%S'):
+    if isinstance(value, str):
+        try:
+            return datetime.strftime(value, format)
+        except ValueError:
+            return value  # Return the original value if it can't be parsed
+    return value
+
+# Break log route
+@app.route("/break_log", methods=["GET", "POST"])
+def break_log():
+    if 'staff_id' not in session:
+        flash('Please log in to access the break logs.', 'warning')
+        return redirect(url_for('login'))
+
+    staff_id = session['staff_id']
+    position = session.get('position')
+
+    # Fetch break log data from shelve
+    with sh.open("break_log.db", writeback=True) as log_db:
+        break_data = log_db.get("break_log", {})
+
+    filtered_logs = break_data.copy()
+
+    # Filter logs by selected date range
+    if request.method == "POST":
+        start_date = request.form.get("start_date")
+        end_date = request.form.get("end_date")
+
+        if start_date and end_date:
+            filtered_logs = {
+                sid: details for sid, details in break_data.items()
+                if start_date <= details.get("date", "") <= end_date
+            }
+
+    # Staff can only view their own logs; Managers can view all logs
+    if position != 'manager':
+        filtered_logs = {staff_id: filtered_logs.get(staff_id, {})}
+
+    return render_template(
+        "break_log.html",
+        break_data=filtered_logs,
+        position=position,
+        start_date=request.form.get("start_date", ""),
+        end_date=request.form.get("end_date", "")
+    )
+@app.route("/progress_report")
+def progress_report():
+    # Make sure to pass the data as lists
+    return render_template("progress_report.html",
+                           monthly_sales=monthly_sales,
+                           individual_sales=individual_sales)
+
+@app.route("/export_excel")
+def export_excel():
+    import pandas as pd
+    from io import BytesIO
+    from flask import send_file
+
+    data = []
+    for month in monthly_sales:
+        total_sales = month["Total Sales"]
+        revenue = month["Revenue"]
+        for item in individual_sales.get(month["Month"], []):
+            data.append({
+                "Month": month["Month"],
+                "Item Name": item["Item Name"],
+                "Units Sold": item["Units Sold"],
+                "Revenue": item["Revenue"],
+                "Total Sales": total_sales,
+                "Monthly Revenue": revenue
+            })
+
+    df = pd.DataFrame(data)
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Sales Data")
+    output.seek(0)
+
+    return send_file(output, as_attachment=True, download_name="sales_data.xlsx")
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
