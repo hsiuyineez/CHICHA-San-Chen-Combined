@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Break Information{% endblock %}
+
+{% block content %}
+<h1 class="text-center my-4">Break Information</h1>
+
+<div class="container">
+    <p class="alert alert-info">
+        Breaks are recorded automatically. Ensure you clock in and out properly.
+    </p>
+
+    <div class="container-sm mt-4 p-4 shadow rounded" style="max-width: 400px;">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Staff ID:</label>
+                <input type="text" class="form-control form-control-sm"
+                       value="{{ session['staff_id'] }}" readonly>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Break In Time:</label>
+                <input type="text" class="form-control form-control-sm"
+                       value="{{ user_break_record['break_in'] if user_break_record['break_in'] else 'Not Recorded' }}" readonly>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Break Out Time:</label>
+                <input type="text" class="form-control form-control-sm"
+                       value="{{ user_break_record['break_out'] if user_break_record['break_out'] else 'Not Recorded' }}" readonly>
+            </div>
+
+            <button type="submit" name="break_action" value="break_in" class="btn btn-success w-100">Break In</button>
+            <button type="submit" name="break_action" value="break_out" class="btn btn-danger w-100 mt-2">Break Out</button>
+        </form>
+    </div>
+
+    {% if invalid_time %}
+    <div class="alert alert-warning mt-4">
+        Break-in or Break-out time must be between 9 AM and 11 PM. The break does not count outside of these hours.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

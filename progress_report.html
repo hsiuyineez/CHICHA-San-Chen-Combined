@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}ChiCha SanChen Staff - Progress and Report{% endblock %}
+
+{% block content %}
+<header>
+    <h1 class="text-center my-4">Progress Report</h1>
+</header>
+
+<div class="container">
+    <div class="table-header mb-3 d-flex justify-content-between">
+        <div></div>
+        <a href="{{ url_for('export_excel') }}" class="btn btn-primary">Export to Excel</a>
+    </div>
+
+    <!-- Tabs for Monthly Report and Individual Items -->
+    <div class="d-flex justify-content-center mb-4">
+        <button class="btn btn-secondary me-2 tablinks" onclick="openTab(event, 'monthly')">Monthly Report</button>
+        <button class="btn btn-secondary tablinks" onclick="openTab(event, 'individual')">Individual Items</button>
+    </div>
+
+    <!-- Monthly Sales Report -->
+    <section id="monthly" class="tabcontent">
+        <h2 class="text-center mb-4">Monthly Sales Report</h2>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Total Sales</th>
+                    <th>Revenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for month in monthly_sales %}
+                <tr>
+                    <td>{{ month["Month"] }}</td>
+                    <td>{{ month["Total Sales"] }}</td>
+                    <td>{{ month["Revenue"] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <!-- Monthly Sales Chart -->
+        <div class="chart-container mt-4">
+            <canvas id="monthlySalesChart"></canvas>
+        </div>
+        <!-- Revenue Chart -->
+        <div class="chart-container mt-4">
+            <canvas id="monthlyRevenueChart"></canvas>
+        </div>
+    </section>
+
+    <!-- Individual Item Sales Report -->
+    <section id="individual" class="tabcontent" style="display:none;">
+        <h2 class="text-center mb-4">Individual Item Sales Report</h2>
+        <div class="mb-3">
+            <label for="monthSelect" class="form-label">Select Month:</label>
+            <select id="monthSelect" class="form-select">
+                {% for month in monthly_sales %}
+                <option value="{{ month['Month'] }}">{{ month['Month'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <table id="individualSalesTable" class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Units Sold</th>
+                    <th>Revenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- The table will be dynamically updated with JS -->
+            </tbody>
+        </table>
+
+        <!-- Graph Containers for individual sales and revenue -->
+        <div class="chart-container mt-4">
+            <canvas id="individualSalesChart"></canvas>
+        </div>
+        <div class="chart-container mt-4">
+            <canvas id="revenueChart"></canvas>
+        </div>
+    </section>
+</div>
+
+<!-- Include jQuery and Bootstrap JS for dynamic interactions -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Include Chart.js for graphs -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Your custom JS for dynamic table and chart updates -->
+<script>
+    // Tab functionality
+    function openTab(evt, tabName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tabcontent");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+        tablinks = document.getElementsByClassName("tablinks");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].classList.remove("active");
+        }
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.classList.add("active");
+    }
+
+    // Update individual item sales and graphs based on selected month
+    $(document).ready(function () {
+        // Monthly Sales and Revenue Chart
+        var monthlyData = {{ monthly_sales|tojson }};
+
+        // Prepare data for the charts
+        var months = monthlyData.map(function (item) { return item["Month"]; });
+        var totalSales = monthlyData.map(function (item) { return item["Total Sales"]; });
+        var revenue = monthlyData.map(function (item) { return item["Revenue"]; });
+
+        // Monthly Sales Chart
+        var ctxSales = document.getElementById('monthlySalesChart').getContext('2d');
+        var monthlySalesChart = new Chart(ctxSales, {
+            type: 'bar',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Total Sales',
+                    data: totalSales,
+                    backgroundColor: '#4CAF50',
+                    borderColor: '#4CAF50',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+            }
+        });
+
+        // Monthly Revenue Chart
+        var ctxRevenue = document.getElementById('monthlyRevenueChart').getContext('2d');
+        var monthlyRevenueChart = new Chart(ctxRevenue, {
+            type: 'bar',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Revenue',
+                    data: revenue,
+                    backgroundColor: '#FFC107',
+                    borderColor: '#FFC107',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+            }
+        });
+
+        // Update individual item sales and graphs based on selected month
+        var charts = {}; // Store chart instances to destroy old charts
+
+        $('#monthSelect').change(function () {
+            var selectedMonth = $(this).val();
+            var data = {{ individual_sales|tojson }};
+            var tableBody = $("#individualSalesTable tbody");
+            tableBody.empty(); // Clear existing rows
+
+            // Filter data based on the selected month
+            var monthData = data[selectedMonth] || [];
+
+            // Populate the table with data for the selected month
+            monthData.forEach(function (item) {
+                var row = `<tr>
+                    <td>${item['Item Name']}</td>
+                    <td>${item['Units Sold']}</td>
+                    <td>${item['Revenue']}</td>
+                </tr>`;
+                tableBody.append(row);
+            });
+
+            // Prepare data for charts
+            var itemNames = monthData.map(function (item) { return item['Item Name']; });
+            var unitsSold = monthData.map(function (item) { return item['Units Sold']; });
+            var revenue = monthData.map(function (item) { return item['Revenue']; });
+
+            // Create or update the Individual Sales Chart (Units Sold vs Item Name)
+            if (charts.individualSalesChart) {
+                charts.individualSalesChart.destroy(); // Destroy previous chart
+            }
+
+            var ctx1 = document.getElementById('individualSalesChart').getContext('2d');
+            charts.individualSalesChart = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: itemNames,
+                    datasets: [{
+                        label: 'Units Sold',
+                        data: unitsSold,
+                        backgroundColor: '#4CAF50',
+                        borderColor: '#4CAF50',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                }
+            });
+
+            // Create or update the Revenue Chart (Revenue vs Item Name)
+            if (charts.revenueChart) {
+                charts.revenueChart.destroy(); // Destroy previous chart
+            }
+
+            var ctx2 = document.getElementById('revenueChart').getContext('2d');
+            charts.revenueChart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: itemNames,
+                    datasets: [{
+                        label: 'Revenue',
+                        data: revenue,
+                        backgroundColor: '#FFC107',
+                        borderColor: '#FFC107',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                }
+            });
+        });
+
+        // Trigger change to load initial data
+        $('#monthSelect').trigger('change');
+    });
+</script>
+
+{% endblock %}
