@@ -21,6 +21,7 @@ import os
 from werkzeug.utils import secure_filename
 import shelve as sh
 from data import monthly_sales, individual_sales
+import json
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
