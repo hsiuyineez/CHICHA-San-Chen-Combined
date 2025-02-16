@@ -9,3 +9,5 @@ in app.py, go to command prompt to install this few things:
 7. pip install numpy
 8. pip install Jinja2
 9. pip install greenlet
+
+* can run using app.py instead cos idk how to delete files
