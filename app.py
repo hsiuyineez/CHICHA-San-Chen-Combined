@@ -19,6 +19,8 @@ from flask import Response
 import shelve
 import os
 from werkzeug.utils import secure_filename
+import shelve as sh
+from data import monthly_sales, individual_sales
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
