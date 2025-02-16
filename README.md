@@ -10,4 +10,4 @@ in app.py, go to command prompt to install this few things:
 8. pip install Jinja2
 9. pip install greenlet
 
-* can run using app.py instead cos idk how to delete files
+* can run using app.py instead cos idk how to delete files (__init__.py)
