@@ -29,13 +29,15 @@
     {% endif %}
 {% endwith %}
 
-<div class="container-fluid position-relative p-0" style="height: 100vh; background-image: url('{{ url_for('static', filename='img_1.png') }}'); background-size: cover; background-position: center;">
-    <div class="welcome-section position-absolute top-50 start-50 translate-middle text-center text-white">
+<div class="div2">
+
+   <div class="welcome-section">
         <h1 class="display-4">Staff Discount</h1>
     </div>
 </div>
 
-<div class="container my-5">
+
+<div class="div1">
     <h2 class="text-center">Available Discounts</h2>
     <table class="table table-bordered table-striped mt-4">
         <thead>
@@ -69,7 +71,7 @@
         </tbody>
     </table>
 </div>
-
+<br><br>
 
 <script>
     function showModal(button) {
@@ -90,5 +92,47 @@
         return true;  // Allow form submission
     }
 </script>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden; /* Prevents horizontal scroll */
+}
 
+.div2{
+    position: relative;
+    top:0;
+    left:0;
+    width: 100vw; /* Ensures full width */
+    height: 100vh; /* Full screen height */
+    background-image: url("{{ url_for('static', filename='img_1.png') }}");
+    background-repeat: no-repeat;
+    background-size: cover; /* Ensures full coverage without stretching */
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align:center;
+    color:white;
+}
+
+.div1 {
+    padding-top: 100px;
+}
+.container-fluid {
+    padding: 0;
+    margin: 0;
+    width: 100vw;
+    max-width: 100%;
+}
+
+.div1 table {
+    max-width: 90%; /* Set your preferred width */
+    margin: 0 auto; /* Center the table */
+    padding: 10px; /* Add some space around table content */
+}
+</style>
 {% endblock %}
